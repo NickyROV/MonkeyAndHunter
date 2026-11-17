@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkey and Hunter</title>
+    <!-- Load Tailwind CSS for modern, responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdfa; /* Light teal background */
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background-color: #ffffff;
+            cursor: crosshair;
+        }
+        .setup-img {
+            object-fit: cover;
+            width: 100%;
+            max-height: 250px;
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-8">
+
+    <main class="max-w-5xl mx-auto space-y-8">
+        
+        <!-- Header Section -->
+        <header class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">Monkey and Hunter</h1>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <strong class="text-slate-800">Physics Principle:</strong> All objects fall at the same rate due to gravity, regardless of horizontal velocity. Because the gun shoots horizontally, if the gun and the monkey are at the same initial height, the bullet and the monkey will fall the exact same vertical distance in the same amount of time, resulting in a collision.
+            </p>
+        </header>
+
+        <!-- Experimental Setup Section -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <h2 class="text-2xl font-semibold text-slate-900 mb-6 border-b pb-2 border-slate-100">Experimental Setup</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Text Details -->
+                <div class="space-y-4">
+                    <ul class="space-y-3 text-slate-700 list-disc list-inside">
+                        <li><strong>Hunter's Gun:</strong> NERF Slyshot with cotton bullet to ensure safety.</li>
+                        <li><strong>Monkey:</strong> Puffy toy.</li>
+                        <li><strong>Range:</strong> 3 meters to 10 meters.</li>
+                        <li><strong>Communication hardware:</strong> ESP32-S3 Mini.</li>
+                        <li><strong>Communication protocol:</strong> ESP-NOW.</li>
+                    </ul>
+                    
+                    <div class="mt-6 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <h3 class="font-semibold text-slate-800 mb-2">Mechanism:</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            One ESP32-S3 Mini has a photo gate attached to the gun barrel. When the cotton bullet passes through, it triggers the drop. The monkey hangs from an electromagnet connected to the secondary side of a Photo-coupler. The drop is triggered by the output signal from the secondary ESP32-S3 Mini.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- References/Images -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col items-center">
+                        <img src="1_2.jpg" alt="NERF Gun" style="max-width: 100%; height: auto; border-radius: 0.5rem; object-fit: cover; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" onerror="this.src='https://placehold.co/300x200/e2e8f0/64748b?text=1_2.jpg'">
+                        <span class="text-xs text-slate-500 mt-2 font-medium">Hunter's Gun</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <img src="2_2.jpg" alt="Monkey Toy" style="max-width: 100%; height: auto; border-radius: 0.5rem; object-fit: cover; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" onerror="this.src='https://placehold.co/300x200/e2e8f0/64748b?text=2_2.jpg'">
+                        <span class="text-xs text-slate-500 mt-2 font-medium">Monkey Target</span>
+                    </div>
+                    <div class="flex flex-col items-center col-span-2 mt-4">
+                        <video src="range_2.MOV" controls style="max-width: 100%; max-height: 250px; border-radius: 0.5rem; background: #000; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></video>
+                        <span class="text-xs text-slate-500 mt-2 font-medium">Range Demonstration (3m - 10m)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulation Section -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 class="text-xl font-semibold">Interactive Simulation</h2>
+                
+                <!-- Controls -->
+                <div class="flex items-center gap-4 w-full md:w-auto flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <label for="velocity-slider" class="text-sm font-medium text-slate-300">Initial Velocity:</label>
+                        <input type="range" id="velocity-slider" min="10" max="40" value="20" class="w-32 accent-teal-500">
+                        <span id="velocity-display" class="text-sm font-mono w-8">20</span>
+                    </div>
+                    
+                    <button id="btn-fire" class="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg transition-colors focus:ring-4 focus:ring-teal-500/30">
+                        FIRE!
+                    </button>
+                    <button id="btn-reset" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-colors">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative w-full aspect-[2/1] border-t border-slate-200">
+                <canvas id="sim-canvas" class="absolute inset-0 w-full h-full"></canvas>
+                <!-- Overlay message -->
+                <div id="sim-message" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+                    <span class="bg-white/90 px-6 py-3 rounded-full shadow-lg text-2xl font-bold text-teal-600 border-2 border-teal-200 backdrop-blur-sm">
+                        Direct Hit!
+                    </span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Source Code Section -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <h2 class="text-2xl font-semibold text-slate-900 mb-6 border-b pb-2 border-slate-100">ESP32 Source Code</h2>
+            
+            <div class="space-y-8">
+                <!-- Gun ESP32 -->
+                <div>
+                    <h3 class="text-lg font-medium text-slate-800 mb-3">Gun ESP32 (gun.cpp)</h3>
+                    <pre class="bg-slate-800 text-slate-100 p-4 rounded-xl overflow-x-auto text-sm font-mono leading-relaxed"><code>#include &lt;Arduino.h&gt;
+#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+
+// GPIO pin for photogate sensor
+#define PHOTOGATE_PIN 4
+
+// MAC address of Station 2 (replace with actual MAC from Station 2)
+uint8_t station2MAC[] = {0x24, 0x6F, 0x28, 0xAA, 0xBB, 0xCC};
+
+// Structure for sending data
+typedef struct struct_message {
+    char msg[32];
+} struct_message;
+
+struct_message myData;
+
+// Callback when data is sent
+void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.print("Send Status: ");
+    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    pinMode(PHOTOGATE_PIN, INPUT_PULLUP);
+
+    // Init WiFi in STA mode
+    WiFi.mode(WIFI_STA);
+    Serial.print("Station 1 MAC: ");
+    Serial.println(WiFi.macAddress());
+
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+
+    esp_now_register_send_cb(onDataSent);
+
+    // Add Station 2 as peer
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(peerInfo.peer_addr, station2MAC, 6);
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
+
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+        Serial.println("Failed to add peer");
+        return;
+    }
+}
+
+void loop() {
+    static bool lastState = HIGH;
+    bool currentState = digitalRead(PHOTOGATE_PIN);
+
+    // Trigger when photogate changes from HIGH to LOW
+    if (lastState == HIGH && currentState == LOW) {
+        strcpy(myData.msg, "TRIGGER");
+        esp_err_t result = esp_now_send(station2MAC, (uint8_t *)&myData, sizeof(myData));
+        if (result == ESP_OK) {
+            Serial.println("Message sent to Station 2");
+        } else {
+            Serial.println("Error sending message");
+        }
+    }
+    lastState = currentState;
+}</code></pre>
+                </div>
+
+                <!-- Monkey Drop ESP32 -->
+                <div>
+                    <h3 class="text-lg font-medium text-slate-800 mb-3">Monkey Drop ESP32 (drop.cpp)</h3>
+                    <pre class="bg-slate-800 text-slate-100 p-4 rounded-xl overflow-x-auto text-sm font-mono leading-relaxed"><code>#include &lt;Arduino.h&gt;
+#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+
+// GPIO pin for optocoupler input
+#define OPTOCOUPLER_PIN 5
+// GPIO pin for output trigger
+#define OUTPUT_PIN 2
+
+// Structure for receiving data
+typedef struct struct_message {
+    char msg[32];
+} struct_message;
+
+struct_message incomingData;
+
+// Callback when data is received
+void onDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
+    memcpy(&incomingData, data, sizeof(incomingData));
+    Serial.print("Received message: ");
+    Serial.println(incomingData.msg);
+
+    if (strcmp(incomingData.msg, "TRIGGER") == 0) {
+        digitalWrite(OUTPUT_PIN, HIGH);
+        delay(500); // Pulse duration
+        digitalWrite(OUTPUT_PIN, LOW);
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    pinMode(OPTOCOUPLER_PIN, INPUT_PULLUP);
+    pinMode(OUTPUT_PIN, OUTPUT);
+    digitalWrite(OUTPUT_PIN, LOW);
+
+    // Init WiFi in STA mode
+    WiFi.mode(WIFI_STA);
+    Serial.print("Station 2 MAC: ");
+    Serial.println(WiFi.macAddress());
+
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+
+    esp_now_register_recv_cb(onDataRecv);
+}
+
+void loop() {
+    // Station 2 is passive — no loop actions needed
+}</code></pre>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <script>
+        // Simulation Application Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('sim-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // UI Elements
+            const btnFire = document.getElementById('btn-fire');
+            const btnReset = document.getElementById('btn-reset');
+            const sliderVel = document.getElementById('velocity-slider');
+            const valVel = document.getElementById('velocity-display');
+            const msgBox = document.getElementById('sim-message');
+            const msgText = msgBox.querySelector('span');
+
+            // Physics & Rendering Constants
+            const gravity = 0.2; // Canvas pixel scaling for gravity
+            let animationId;
+            let isFiring = false;
+            let isHit = false;
+
+            // Entities state
+            let monkey = { x: 0, y: 0, r: 25, vy: 0, path: [] };
+            let bullet = { x: 0, y: 0, r: 8, vx: 0, vy: 0, path: [] };
+            let gun = { x: 0, y: 0, angle: 0 };
+            
+            let initialVelocity = parseInt(sliderVel.value);
+
+            // Resize canvas logically to match its display size
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                resetSim();
+            }
+            window.addEventListener('resize', resizeCanvas);
+
+            // Update velocity display
+            sliderVel.addEventListener('input', (e) => {
+                initialVelocity = parseInt(e.target.value);
+                valVel.textContent = initialVelocity;
+                if(!isFiring) resetSim();
+            });
+
+            // Initialize simulation positions
+            function resetSim() {
+                cancelAnimationFrame(animationId);
+                isFiring = false;
+                isHit = false;
+                msgBox.classList.add('opacity-0');
+                
+                btnFire.disabled = false;
+                btnFire.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                // Positions based on current canvas size
+                // Start high up so they have room to fall
+                gun.x = canvas.width * 0.1;
+                gun.y = canvas.height * 0.2;
+
+                monkey.x = canvas.width * 0.85;
+                monkey.y = gun.y; // Set to EXACT SAME HEIGHT as the gun
+                monkey.vy = 0;
+                monkey.path = [];
+
+                bullet.x = gun.x;
+                bullet.y = gun.y;
+                bullet.vx = 0;
+                bullet.vy = 0;
+                bullet.path = [];
+
+                // Gun shoots perfectly horizontally
+                gun.angle = 0;
+
+                draw();
+            }
+
+            function fire() {
+                if (isFiring) return;
+                isFiring = true;
+                
+                // Disable fire button during animation
+                btnFire.disabled = true;
+                btnFire.classList.add('opacity-50', 'cursor-not-allowed');
+
+                // Calculate initial bullet velocity components
+                bullet.vx = initialVelocity * Math.cos(gun.angle);
+                bullet.vy = initialVelocity * Math.sin(gun.angle);
+
+                // Start loop
+                update();
+            }
+
+            function update() {
+                if (!isFiring || isHit) return;
+
+                // Physics step for Bullet
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.vy += gravity; // Apply gravity
+
+                // Physics step for Monkey (dropped simultaneously)
+                monkey.y += monkey.vy;
+                monkey.vy += gravity; // Apply gravity
+
+                // Record paths for drawing trails
+                if (bullet.path.length % 2 === 0) { // optimize path saving slightly
+                    bullet.path.push({ x: bullet.x, y: bullet.y });
+                    monkey.path.push({ x: monkey.x, y: monkey.y });
+                }
+
+                // Collision Detection (Circle intersection)
+                const dist = Math.hypot(bullet.x - monkey.x, bullet.y - monkey.y);
+                if (dist < bullet.r + monkey.r) {
+                    isHit = true;
+                    showResult(true);
+                } 
+                // Out of bounds detection (Ground hit)
+                else if (bullet.y > canvas.height || bullet.x > canvas.width) {
+                    isFiring = false;
+                    showResult(false);
+                    return; // Stop updating
+                }
+
+                draw();
+                
+                if(!isHit) {
+                    animationId = requestAnimationFrame(update);
+                }
+            }
+
+            function showResult(hit) {
+                msgBox.classList.remove('opacity-0');
+                if (hit) {
+                    msgText.textContent = "Direct Hit!";
+                    msgText.className = "bg-white/95 px-6 py-3 rounded-full shadow-lg text-2xl font-bold text-teal-600 border-2 border-teal-400 backdrop-blur-sm";
+                } else {
+                    msgText.textContent = "Missed (Hit Ground)";
+                    msgText.className = "bg-white/95 px-6 py-3 rounded-full shadow-lg text-2xl font-bold text-rose-500 border-2 border-rose-400 backdrop-blur-sm";
+                }
+                draw(); // Draw final state
+            }
+
+            function draw() {
+                // Clear Canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw Grid (optional for educational aesthetic)
+                ctx.strokeStyle = '#f1f5f9';
+                ctx.lineWidth = 1;
+                for(let i = 0; i < canvas.width; i+=50) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+                }
+                for(let i = 0; i < canvas.height; i+=50) {
+                    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+                }
+
+                // Draw Aiming Line (Horizontal Line of sight)
+                ctx.beginPath();
+                ctx.setLineDash([5, 10]);
+                ctx.moveTo(gun.x, gun.y);
+                ctx.lineTo(canvas.width, gun.y); // Horizontal aim line
+                ctx.strokeStyle = '#cbd5e1'; // light grey
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset
+
+                // Draw Trails
+                drawPath(bullet.path, '#fb923c'); // Orange bullet trail
+                drawPath(monkey.path, '#94a3b8'); // Grey monkey trail
+
+                // Draw Gun/Hunter
+                ctx.save();
+                ctx.translate(gun.x, gun.y);
+                ctx.rotate(gun.angle);
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(-10, -10, 40, 20); // Gun barrel
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(0, 0, 15, 0, Math.PI * 2); // Hunter pivot
+                ctx.fill();
+                ctx.restore();
+
+                // Draw Monkey (Puffy Toy representation)
+                ctx.fillStyle = '#8b5cf6'; // Purple representing puffy toy
+                ctx.beginPath();
+                ctx.arc(monkey.x, monkey.y, monkey.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Monkey Face
+                ctx.fillStyle = 'white';
+                ctx.beginPath(); ctx.arc(monkey.x - 8, monkey.y - 5, 4, 0, Math.PI*2); ctx.fill(); // Left eye
+                ctx.beginPath(); ctx.arc(monkey.x + 8, monkey.y - 5, 4, 0, Math.PI*2); ctx.fill(); // Right eye
+                ctx.fillStyle = 'black';
+                ctx.beginPath(); ctx.arc(monkey.x - 8, monkey.y - 5, 2, 0, Math.PI*2); ctx.fill(); 
+                ctx.beginPath(); ctx.arc(monkey.x + 8, monkey.y - 5, 2, 0, Math.PI*2); ctx.fill(); 
+                
+                // Draw Bullet (Cotton Projectile)
+                if (isFiring || isHit) {
+                    ctx.fillStyle = '#f97316'; // Orange NERF style
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ea580c';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
+                // Draw Explosion effect if hit
+                if (isHit) {
+                    ctx.fillStyle = '#fef08a';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fb923c';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function drawPath(pathArray, color) {
+                if (pathArray.length < 2) return;
+                ctx.beginPath();
+                ctx.moveTo(pathArray[0].x, pathArray[0].y);
+                for (let i = 1; i < pathArray.length; i++) {
+                    ctx.lineTo(pathArray[i].x, pathArray[i].y);
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // Event Listeners
+            btnFire.addEventListener('click', fire);
+            btnReset.addEventListener('click', resetSim);
+
+            // Initial Setup
+            resizeCanvas(); // Will call resetSim() and draw()
+        });
+    </script>
+</body>
+</html>
